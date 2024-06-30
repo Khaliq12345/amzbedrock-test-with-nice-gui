@@ -6,3 +6,4 @@ config_things
 *ipynb
 .nicegui
 test.py
+config.py
