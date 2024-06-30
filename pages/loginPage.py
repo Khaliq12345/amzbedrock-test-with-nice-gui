@@ -6,11 +6,12 @@ import base64
 import requests
 
 FIREBASE_WEB_API_KEY = ultraimport('./config_things/config.py', 'FIREBASE_WEB_API_KEY')
+FIREBASE_HOST = ultraimport('./config_things/config.py', 'FIREBASE_HOST')
 
 def get_user_data(email: str):
     encoded = email.encode()
     encoded = base64.b64encode(encoded).decode()
-    response = requests.get(f"https://amzbedrock-ppc-tools-default-rtdb.firebaseio.com/users/{encoded}.json")
+    response = requests.get(f"https://{FIREBASE_HOST}/users/{encoded}.json")
     if response.status_code == 200:
         return response.json()
     else:

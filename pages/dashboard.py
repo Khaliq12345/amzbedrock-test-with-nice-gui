@@ -6,6 +6,7 @@ import asyncio
 import ultraimport
 
 STRIPE_KEY = ultraimport('./config_things/config.py', 'STRIPE_KEY')
+FIREBASE_HOST = ultraimport('./config_things/config.py', 'FIREBASE_HOST')
 
 async def verify_payment(email: str):
     await asyncio.sleep(10)
@@ -18,7 +19,7 @@ async def verify_payment(email: str):
         data = {"is_paid": True}
         encoded = email.encode()
         encoded = base64.b64encode(encoded).decode()
-        url = f'https://amzbedrock-ppc-tools-default-rtdb.firebaseio.com/users/{encoded}.json'
+        url = f'https://{FIREBASE_HOST}/users/{encoded}.json'
         if ph.make_rest_req(headers, data, url, method='patch'):
             user_info = ph.get_user_info(email)
             return user_info

@@ -5,6 +5,7 @@ import pages.pageHelpers as ph
 import base64
 
 FIREBASE_WEB_API_KEY = ultraimport('./config_things/config.py', 'FIREBASE_WEB_API_KEY')
+FIREBASE_HOST = ultraimport('./config_things/config.py', 'FIREBASE_HOST')
 
 def delete_created_user(idToken):
     headers = {
@@ -24,7 +25,7 @@ def create_new_user(idToken, email, lname, fname, username):
     encoded_email = base64.b64encode(encoded).decode()
     data = {encoded_email: {"email": email, "is_paid": False,
                             'first_name': fname, 'last_name': lname, 'username': username}}
-    url = f"https://amzbedrock-ppc-tools-default-rtdb.firebaseio.com/users.json?auth={idToken}"
+    url = f"https://{FIREBASE_HOST}/users.json?auth={idToken}"
     response = ph.make_rest_req(headers, data, url, method='patch')
     if response:
         pass

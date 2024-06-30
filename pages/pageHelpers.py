@@ -2,11 +2,14 @@ from nicegui import ui, app
 from dateparser import parse
 import requests
 import base64
+import ultraimport
+
+FIREBASE_HOST = ultraimport('./config_things/config.py', 'FIREBASE_HOST')
 
 def get_user_info(email):
     encoded = email.encode()
     encoded = base64.b64encode(encoded).decode()
-    response = requests.get(f"https://amzbedrock-ppc-tools-default-rtdb.firebaseio.com/users/{encoded}.json")
+    response = requests.get(f"https://{FIREBASE_HOST}/users/{encoded}.json")
     if response.status_code == 200:
         return response.json()
     else:
