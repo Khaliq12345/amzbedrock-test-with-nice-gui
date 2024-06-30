@@ -6,6 +6,11 @@ import requests
 import uuid
 import os
 from datetime import datetime
+
+def make_the_table(row, single, out_cols):
+    pa_df, pa_df_list = download_product_ads(row)
+    x_table = single.get_table(out_cols, None, skus=pa_df_list)
+    return x_table, pa_df
     
 def parse_my_date(date_str):
     return dateparser.parse(str(date_str)).strftime("%Y%m%d")
@@ -80,7 +85,7 @@ class CommonObj(BaseModel):
     
     @field_validator('bidding_strategy', mode='after')
     def validate_bidding_strategy(cls, input_data: str):
-        if input_data in ['Dynamic bids - up and down', 'Dynamic bids - down only', 'Fixed bid']:
+        if input_data.strip() in ['Dynamic bids - up and down', 'Dynamic bids - down only', 'Fixed bid']:
             pass
         else:
             raise ValueError
@@ -92,6 +97,20 @@ class CommonObj(BaseModel):
             pass
         else:
             raise ValueError
+        return input_data
+
+class GroupObj(BaseModel):
+    sku_group_name: str
+    product_ads: str
+    
+    @field_validator('product_ads', mode='after')
+    def validate_pa_df(cls, input_data: str):
+        if pd.isna(input_data):
+            pass
+        else:
+            df = download_from_gdrive(input_data)
+            if len(df.columns) != 2:
+                raise ValueError
         return input_data
 
 def saving_common_errors(error: dict, row, error_messages: list, warning_messages: list):
@@ -128,6 +147,41 @@ def saving_common_errors(error: dict, row, error_messages: list, warning_message
         error_messages.append(f"Row {row.name} Console Error: Must be either SC or VC")
     elif 'start_date' in error['loc']:
         error_messages.append(f"Row {row.name} Start Date Error: Please enter either 'today' or an exact date")
+
+def saving_group_errors(error: dict, row, error_messages: list, warning_messages: list):
+    if 'sku_group_name' in error['loc']:
+        error_messages.append(f"Row {row.name} SKU Group Name Error: Please put in the Sku group name")
+    elif 'product_ads' in error['loc']:
+        error_messages.append(f"Row {row.name} Product Ads Error: Please ensure the link added is a Google Drive link (anyone with the link can edit) to a csv with the SKU in column A and ASIN in column B with no header row")
+
+def add_ps_feature(func):
+    def wrapper(cols: list, any_data: list, skus: list = []):
+        items = func(cols, any_data, skus)
+        if len(skus) == 0:
+            items.append({
+                'Product': "Sponsored Products",
+                'Entity': 'Product Ad'
+            })
+        else:
+            for sku in skus:
+                items.append({
+                    'Product': "Sponsored Products",
+                    'Entity': 'Product Ad'
+                })
+        df = pd.DataFrame(items, columns=cols)
+        for col in cols:
+            df[col] = df[col].astype('object')
+        return df
+    return wrapper
+
+def download_product_ads(row):
+    pa_df = None
+    if not pd.isna(row['Product Ads']):
+        pa_df = download_from_gdrive(row['Product Ads'])
+        pa_df_list = pa_df[0].to_list()
+    else:
+        pa_df_list = []
+    return pa_df, pa_df_list
 
 @retry(stop_max_attempt_number=5, wait_fixed=500)
 def download_from_gdrive(g_url: str):

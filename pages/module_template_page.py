@@ -1,10 +1,11 @@
 import pandas as pd
-from nicegui import ui, events, run
-from io import StringIO, BytesIO
+from nicegui import ui, events, run, app
+from io import BytesIO
 import helpers as hep
 from descriptions import *
 from campaign_names import *
 import io
+import pages.pageHelpers as ph
 
 class ModuleTemp:
     def __init__(self, module_name: str, module_description: str, module_obj, cno: dict):
@@ -56,69 +57,92 @@ class ModuleTemp:
         #---------------------------------------------------------
         self.output_data_col.clear()
         self.spinner_col.clear()
-        with self.spinner_col as spin:
+        with self.spinner_col:
             ui.spinner(size='lg', type='hourglass')
         #---------------------------------------------------
         with self.output_data_col:
             if self.input_df is not None:
                 self.output_data = await run.cpu_bound(self.module_obj.proccess_df, self.input_df, name_values)
                 with ui.expansion(caption="Show output").props('header-class="bg-green-3"').classes('w-full px-10'):
-                    ui.table.from_pandas(df=self.output_data.head()).classes('w-full my-sticky-header-column-table').props('separator="cell" flat bordered')
+                    ui.table.from_pandas(df=self.output_data.head(10)).classes('w-full my-sticky-header-column-table').props('separator="cell" flat bordered')
                     self.buffer = io.BytesIO()
-                    writer = pd.ExcelWriter(self.buffer.read(), engine='xlsxwriter')
+                    writer = pd.ExcelWriter(self.buffer, engine='xlsxwriter')
                     self.output_data.to_excel(writer, sheet_name='Sheet1', index=False)
-                    #writer.close()
-                    ui.button("Download", on_click=lambda: ui.download(writer, 'result.xlsx', 'application/vnd.ms-excel'))
+                    writer.close()
+                with ui.column(align_items='center').classes('w-full px-10'):
+                    ui.button("Download", on_click=lambda: ui.download(self.buffer.getvalue(), 'result.xlsx', 'application/vnd.ms-excel'))
         self.spinner_col.clear()
         
     def on_click_menu(self):
         self.drawer_col.toggle()
         
     def drawer(self):
-        with ui.drawer('left', bordered=True, elevated=True).classes('bg-grey-9 text-white').props('width=225 breakpoint="500"') as self.drawer_col:
-            with ui.column(align_items='stretch'):
-                ui.html('<div class="text-h7">ALL MODULES</div>')
-                ui.separator()
-                ui.button('Sponsored Products Auto Targeting').classes('shadow-up-5').props('push size="10px"').on_click(lambda: ui.navigate.to('/module1'))
-                ui.space()
-                ui.button('Sponsored Products Manual Keyword Targeting').classes('shadow-up-5').props('push size="10px"').on_click(lambda: ui.navigate.to('/module2'))
-                ui.space()
-                ui.button('Module 3').props('push size="10px"').classes('shadow-up-5').on_click(lambda: ui.navigate.to('/module2'))
-                ui.space()
-                ui.button('Module 4').props('push size="10px"').classes('shadow-up-5').on_click(lambda: ui.navigate.to('/module2'))
-                ui.space()
-                ui.button('Module 5').props('push size="10px"').classes('shadow-up-5').on_click(lambda: ui.navigate.to('/module2'))
-                ui.space()
-                ui.button('Module 6').props('push size="10px"').classes('shadow-up-5').on_click(lambda: ui.navigate.to('/module2'))
-                ui.space()
-                ui.button('Module 7').props('push size="10px"').classes('shadow-up-5').on_click(lambda: ui.navigate.to('/module2'))
-                ui.space()
-                ui.button('Module 8').props('push size="10px"').classes('shadow-up-5').on_click(lambda: ui.navigate.to('/module2'))
-                
+        with ui.drawer('left', bordered=True, elevated=True).classes('bg-grey-9 text-white').props('width=350 breakpoint="500"') as self.drawer_col:
+            with ui.column().classes():
+                with ui.row().classes('justify-center w-full'):
+                    with ui.expansion('SINGLE PRODUCT ADS'):
+                        for num, mod in enumerate(module_short_names):        
+                            ui.separator()
+                            with ui.link(target=f'/single/module{num+1}'):
+                                ui.button(mod).props('size="12px" flat')
+                            ui.space()
+                    with ui.expansion('GROUP PRODUCT ADS'):
+                        for num, mod in enumerate(module_short_names):        
+                            ui.separator()
+                            with ui.link(target=f'/group/module{num+1}'):
+                                ui.button(f'Grouped {mod}').props('size="12px" flat')
+                            ui.space()
+    
+    def on_logout(self):
+        app.storage.user['auth'] = None
+        app.storage.user['user'] = None
+        ui.navigate.reload()
+    
+    def header(self):
+        with ui.header(bordered=True):
+            with ui.row().classes('w-full justify-between'):
+                with ui.column():
+                    ui.button(icon='menu', on_click=self.on_click_menu).props('push color="grey-9"')
+                with ui.column():
+                    ui.label(self.module_name).classes('w-full text-h4 text-weight-bold px-10 text-white')
+                with ui.column():
+                    ui.button(icon='logout', on_click=self.on_logout).props('push color="grey-9"')
+           
     def page_template(self):
         self.drawer()
-        with ui.column(wrap=True).classes('w-full'):   
-            ui.button(icon='menu', on_click=self.on_click_menu).props('push color="grey-9"')
-            ui.label(self.module_name).classes('w-full text-h5 text-weight-bold px-10')
-
+        self.header()
+        with ui.column(wrap=True).classes('w-full'):
             with ui.expansion(caption="Description and Instruction").classes('w-full px-10').props('header-class="bg-grey-3"') as expanded:
                 ui.markdown(self.module_description)
 
             self.campaign_name_order = ui.select(options=self.CAMPAIGN_NAME_ORDER, multiple=True,
-                                            label="Set your campaign name order").classes('w-full px-10').props('use-chips color="black"')
+            label="Set your campaign name order").classes('w-full px-10 q-mb-md').props('use-chips')
 
             ui.upload(label="Upload your excel file", on_upload=self.handle_upload, 
-                                auto_upload=True).classes('w-full px-10 h-20').props('flat no-border color="grey-9"')
+            auto_upload=True).classes('w-full px-10 h-20').props('flat no-border color="grey-9"')
             
             self.spinner_col = ui.column().classes('w-full')    
             with ui.row(align_items='center').classes('w-full px-10') as submit_buttons:
-                self.start_button = ui.button("Start Processing!", on_click=self.start_processing).classes('justify-center').props('push')
+                self.start_button = ui.button("Start Processing!", 
+                on_click=self.start_processing).classes('justify-center').props('push')
                 ui.space()
                 self.upload_button = ui.button("Upload!", 
-                on_click=lambda: self.input_error_ui.refresh(self.input_df, self.errors, 'blue', 'red')).classes('justify-center').props('push color="grey-9"')
+                on_click=lambda: self.input_error_ui.refresh(
+                self.input_df, self.errors, 'blue', 'red')).classes('justify-center').props('push color="grey-9"')
                 ui.space()
-                self.proceed_anyway_button = ui.button("Proceed Anyway!", on_click=self.start_processing).classes('push justify-center')
+                self.proceed_anyway_button = ui.button("Proceed Anyway!", 
+                on_click=self.start_processing).classes('push justify-center')
+                ui.space()
+                self.clear_button = ui.button("Clear!", 
+                on_click=lambda: ui.navigate.reload()).classes('push justify-center').props('push color="grey-9"')
                 
             self.input_error_ui(self.input_df, self.errors)
             self.output_data_col = ui.column().classes('w-full')
+        
+    def engine(self):
+        if ph.is_still_login():
+            self.page_template()
+        else:
+            ui.navigate.to('/single')
+            
 
