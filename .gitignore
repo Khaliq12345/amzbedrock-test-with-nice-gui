@@ -1,9 +1,0 @@
-__pycache__
-.venv
-poetry.lock
-pyproject.toml
-config_things
-*ipynb
-.nicegui
-test.py
-config.py
