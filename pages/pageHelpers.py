@@ -4,7 +4,7 @@ import requests
 import base64
 import ultraimport
 
-FIREBASE_HOST = ultraimport('./config_things/config.py', 'FIREBASE_HOST')
+FIREBASE_HOST = ultraimport('../config.py', 'FIREBASE_HOST')
 
 def get_user_info(email):
     encoded = email.encode()

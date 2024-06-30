@@ -4,8 +4,8 @@ from pages.pageHelpers import make_rest_req
 import pages.pageHelpers as ph
 import base64
 
-FIREBASE_WEB_API_KEY = ultraimport('./config_things/config.py', 'FIREBASE_WEB_API_KEY')
-FIREBASE_HOST = ultraimport('./config_things/config.py', 'FIREBASE_HOST')
+FIREBASE_WEB_API_KEY = ultraimport('../config.py', 'FIREBASE_WEB_API_KEY')
+FIREBASE_HOST = ultraimport('../config.py', 'FIREBASE_HOST')
 
 def delete_created_user(idToken):
     headers = {

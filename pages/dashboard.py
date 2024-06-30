@@ -5,8 +5,8 @@ import base64
 import asyncio
 import ultraimport
 
-STRIPE_KEY = ultraimport('./config_things/config.py', 'STRIPE_KEY')
-FIREBASE_HOST = ultraimport('./config_things/config.py', 'FIREBASE_HOST')
+STRIPE_KEY = ultraimport('../config.py', 'STRIPE_KEY')
+FIREBASE_HOST = ultraimport('../config.py', 'FIREBASE_HOST')
 
 async def verify_payment(email: str):
     await asyncio.sleep(10)

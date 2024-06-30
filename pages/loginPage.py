@@ -5,8 +5,9 @@ import pages.pageHelpers as ph
 import base64
 import requests
 
-FIREBASE_WEB_API_KEY = ultraimport('./config_things/config.py', 'FIREBASE_WEB_API_KEY')
-FIREBASE_HOST = ultraimport('./config_things/config.py', 'FIREBASE_HOST')
+FIREBASE_WEB_API_KEY = ultraimport('../config.py', 'FIREBASE_WEB_API_KEY')
+STRIPE_KEY = ultraimport('../config.py', 'STRIPE_KEY')
+FIREBASE_HOST = ultraimport('../config.py', 'FIREBASE_HOST')
 
 def get_user_data(email: str):
     encoded = email.encode()
