@@ -1,11 +1,27 @@
-from nicegui import ui, run
+from nicegui import ui
 import ultraimport
 from pages.pageHelpers import make_rest_req
 import pages.pageHelpers as ph
 import base64
+import asyncio
 
 FIREBASE_WEB_API_KEY = ultraimport('./config.py', 'FIREBASE_WEB_API_KEY')
 FIREBASE_HOST = ultraimport('./config.py', 'FIREBASE_HOST')
+
+def validate_info(user_json):
+    try:
+        user = ph.UserModel(**user_json)
+        print(user)
+        return True
+    except ph.ValidationError as e:
+        errors = e.errors()
+        for error in errors:
+            error_message = error['msg'].split(',')[-1]
+            if len(error['loc']) == 0:
+                pass
+            else:
+                error_message = error_message.replace('Input', error['loc'][0])
+            ui.notification(error_message, close_button=True, timeout=10, type='negative')
 
 def delete_created_user(idToken):
     headers = {
@@ -33,22 +49,19 @@ def create_new_user(idToken, email, lname, fname, username):
         delete_created_user(idToken)
     return response
 
-def heavy_compute(email, password, lname, fname, username):
+async def process_signup_process(email, password1, password2, 
+    lastname, firstname, username):
+    await asyncio.sleep(3)
     signedIn_message: dict = {"verification": False, 'idToken': None}
-    signup_json = signup_rest(email, password)
+    signup_json = signup_rest(email, password1)
     if signup_json:
         signup_token = signup_json['idToken']
-        if verify_email(signup_token):
+        if send_email_verification(signup_token):
+            print("Email verification sent")
             signedIn_message['verification'] = True
             signedIn_message['idToken'] = signup_token
-            if create_new_user(signup_token, email, lname, fname, username):
-                pass
-            else:
-                ui.notification("Error creating user! Please try again", type='negative', timeout=2, close_button=True)
-                return {"verification": False, 'idToken': None}
-        else:
-            signedIn_message['verification'] = False
-    return signedIn_message
+            if create_new_user(signup_token, email, lastname, firstname, username):
+                return signedIn_message
 
 def signup_rest(email, password):
     headers = {
@@ -62,7 +75,7 @@ def signup_rest(email, password):
     url = f'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={FIREBASE_WEB_API_KEY}'
     return make_rest_req(headers, json_data, url)
 
-def verify_email(tokenId: str):
+def send_email_verification(tokenId: str):
     headers = {
         'Content-Type': 'application/json',
     }
@@ -81,19 +94,25 @@ class SignIn:
     password: ui.input
     
     async def on_signup(self):
-        if self.password.value == self.confirm_password.value:
+        user_json_info = {
+            'username': self.username.value,
+            'password1': self.password.value,
+            'password2': self.confirm_password.value,
+            'firstname': self.fname.value, 
+            'lastname': self.lname.value,
+            'email': self.email.value
+        }
+        if validate_info(user_json_info):
             with self.spinner_col:
                 ui.spinner(size='lg', type='hourglass')
-            self.signedIn_message = await run.cpu_bound(heavy_compute, 
-            self.email.value, self.password.value, self.lname.value, self.fname.value, self.username.value)
+            self.signedIn_message = await process_signup_process(**user_json_info)
             if self.signedIn_message:
                 ui.notification("Verification email has been sent to your email, verify your account and login",
                             type='positive', close_button=True, on_dismiss=lambda: ui.navigate.to('/login'))
             else:
-                ui.notify("Verification was not sent, check credentials and sign up again", type='negative', timeout=2, close_button=True)
+                ui.notify("Sign up failed, check credentials and sign up again, maybe there is already an account with this email", 
+                          type='negative', timeout=5, close_button=True)
             self.spinner_col.clear()
-        else:
-            ui.notification("Password doesn't match!", type='negative', timeout=2, close_button=True)
                  
     def signin_page(self):
         ui.dark_mode(True)

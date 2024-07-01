@@ -114,4 +114,4 @@ def single_product_ad():
 def group_product_ad():
     group_pa.engine()
 
-ui.run(port=6100, title="AMZBEDROCK", storage_secret='amzbedrock')
+ui.run(port=6100, title="AMZBEDROCK", storage_secret='amzbedrock', reconnect_timeout=60)

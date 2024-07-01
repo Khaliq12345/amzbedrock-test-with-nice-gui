@@ -114,7 +114,7 @@ def get_table(out_cols, any_data, skus: list = []):
     return items
 
 def is_from_row(row, value, tev, cost_type):
-    row_values = ['ASIN', 'SKU','Campaign Name Modifier']
+    row_values = ['ASIN', 'SKU','Campaign Name Modifier', 'SKU Group Name']
     if value in row_values:
         return row[value]
     elif value == 'cost_type':

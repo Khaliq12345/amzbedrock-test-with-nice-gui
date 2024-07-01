@@ -1,22 +1,12 @@
-from nicegui import ui, app, run
+from nicegui import ui, app
 import ultraimport
 from dateparser import parse
 import pages.pageHelpers as ph
-import base64
-import requests
+import asyncio
 
 FIREBASE_WEB_API_KEY = ultraimport('./config.py', 'FIREBASE_WEB_API_KEY')
 STRIPE_KEY = ultraimport('./config.py', 'STRIPE_KEY')
 FIREBASE_HOST = ultraimport('./config.py', 'FIREBASE_HOST')
-
-def get_user_data(email: str):
-    encoded = email.encode()
-    encoded = base64.b64encode(encoded).decode()
-    response = requests.get(f"https://{FIREBASE_HOST}/users/{encoded}.json")
-    if response.status_code == 200:
-        return response.json()
-    else:
-        return None
 
 def is_email_verified(tokenId):
     headers = {
@@ -35,7 +25,8 @@ def is_email_verified(tokenId):
     except:
         return False
 
-def login_rest(email, password):
+async def login_rest(email, password):
+    await asyncio.sleep(3)
     headers = {
         'Content-Type': 'application/json',
     }
@@ -49,14 +40,10 @@ def login_rest(email, password):
     if json_data:
         email_verified = is_email_verified(json_data['idToken'])
         if email_verified:
-            response = get_user_data(email)
+            response = ph.get_user_info(email)
             if response:
                 return {"localId": json_data['localId'], "email": json_data['email'],'idToken': json_data['idToken'], 
                         'expiresIn': parse("In 20 minutes").isoformat()}, response
-        else:
-            return None
-    else:
-        return None
         
 class Login:
     email : ui.input
@@ -65,7 +52,7 @@ class Login:
     async def on_login(self):
         with self.spinner_col:
             ui.spinner(size='lg', type='hourglass')
-        logged_in =  await run.cpu_bound(login_rest, self.email.value, self.password.value)
+        logged_in =  await login_rest(self.email.value, self.password.value)
         if logged_in:
             app.storage.user['auth'] = logged_in[0]
             app.storage.user['user'] = logged_in[1]

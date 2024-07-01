@@ -115,7 +115,7 @@ def get_table(out_cols, targets: list = [], skus: list = []):
 
 def is_from_row(row, value):
     cost_type_campagin = lambda x: f"cpc_{x.split(' ')[-1]}" if (x == 'Optimize for page visits') or (x == 'Optimize for conversions') else f"vcpm_{x.split(' ')[-1]}"
-    row_values = ['ASIN', 'SKU', 'Campaign Name Modifier']
+    row_values = ['ASIN', 'SKU', 'Campaign Name Modifier', 'SKU Group Name']
     if value in row_values:
         return row[value]
     elif value == 'cost_type':
