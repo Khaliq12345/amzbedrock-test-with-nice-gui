@@ -43,11 +43,13 @@ class ModuleTemp:
     def handle_errors(self, err_color: str):
         if len(self.errors['error_messages']) > 0:
             self.start_button.disable()
-            self.proceed_anyway_button.disable()
+            err_color = 'red'
         elif len(self.errors['warning_messages']) > 0:
             self.start_button.disable()
+            self.proceed_anyway_button.enable()
+            err_color = 'orange'
         with self.error_data_col:
-            with ui.expansion(caption="Show errors").props(f'header-class="bg-{err_color}-3"').classes('w-full border rounded-borders'):
+            with ui.expansion(caption="Show errors/warnings").props(f'header-class="bg-{err_color}-3"').classes('w-full border rounded-borders'):
                 for x in self.errors['warning_messages']:
                     ui.markdown(f'ℹ️ <span style="color: orange;">**Info:** {x}</span>').classes('w-full')
                 for x in self.errors['error_messages']:
@@ -73,7 +75,7 @@ class ModuleTemp:
         self.input_df = hep.clean_check_input_file(self.input_df)
         await self.data_checking()
         self.handle_user_input('blue')
-        self.handle_errors('red')
+        self.handle_errors('grey')
   
     async def start_processing(self):
         name_values = [self.CAMPAIGN_NAME_ORDER[v] for v in self.campaign_name_order.value]
@@ -163,6 +165,7 @@ class ModuleTemp:
                 on_click=lambda: ui.navigate.reload()).props('push color="grey-9"')
                 self.proceed_anyway_button = ui.button("Proceed Anyway!", 
                 on_click=self.start_processing).props('push')
+                self.proceed_anyway_button.disable()
                 ui.separator().props('color="black"')
             #---------------------------------------------------------------------------------------------------
             self.spinner_col = ui.column(align_items='center').classes('w-full justify-center mt-3')
