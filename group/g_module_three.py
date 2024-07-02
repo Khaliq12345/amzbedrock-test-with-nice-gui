@@ -46,14 +46,15 @@ def error_check(input_data:pd.DataFrame):
     }
     
 def make_the_table(row):
-    asin_df, pa_df = None, None
+    asin_df = None
+    pa_df, pa_df_list = hep.download_product_ads(row)
     if not pd.isna(row['Product Ads']):
         pa_df = hep.download_from_gdrive(row['Product Ads'])
         pa_df_list = pa_df[0].to_list()
     else:
         pa_df_list = []
     if row['Targeting'] == 'SELF':
-        x_table = single.get_table(out_cols, [row['ASIN']], pa_df_list)
+        x_table = single.get_table(out_cols, pa_df[1].to_list(), pa_df_list)
         asins = None
     else:
         asins = hep.download_from_gdrive(row['Targeting File'])[0].to_list()
@@ -114,9 +115,11 @@ def proccess_df(input_df: pd.DataFrame, campaign_name_order: dict = cno_module_3
         #Product Targeting
         if row['Targeting'] == 'SELF':
             if row['Expanded?'] == 'y':
-                targets = f'asin-expanded="{row["ASIN"]}"'
+                targets = [f'asin-expanded="{t}"' for t in pa_df[1].to_list()]
+                #targets = f'asin-expanded="{row["ASIN"]}"'
             else:
-                targets = f'asin="{row["ASIN"]}"'
+                targets = [f'asin="{t}"' for t in pa_df[1].to_list()]
+                #targets = f'asin="{row["ASIN"]}"'
         else:
             if row['Expanded?'] == 'y':
                 targets = [f'asin-expanded="{t}"' for t in asins]

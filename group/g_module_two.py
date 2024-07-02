@@ -52,21 +52,20 @@ def error_check(input_data:pd.DataFrame):
 def proccess_df(input_df: pd.DataFrame, campaign_name_order: dict = cno_module_2):
     dfs = []
     for i, row in input_df.iterrows():
-        pa_df = hep.download_from_gdrive(row['Product Ads'])
-        pad_df_list = pa_df[0].to_list()
+        pa_df, pa_df_list = hep.download_product_ads(row)
         #get the row table
         if 'Single' in row['Single/Group KWs']:
             kws = hep.download_from_gdrive(row['Keyword Link'])[0].to_list()
             for kw in kws:
                 if not pd.isna(row['Negative Targeting']):
                     neg_df = hep.download_from_gdrive(row['Negative Targeting'])
-                    x_table = single.get_table(out_cols, row['Single/Group KWs'], kw, neg_keywords=neg_df[0].to_list(), skus=pad_df_list)
+                    x_table = single.get_table(out_cols, row['Single/Group KWs'], kw, neg_keywords=neg_df[0].to_list(), skus=pa_df_list)
                     x_table = single.modify_table(row, x_table, 'Single', kw, 
                                             neg_info=[neg_df[0].to_list(), 
                                                         neg_df[1].to_list()],
                                             campaign_name_order=campaign_name_order, pa_df=pa_df)
                 else:
-                    x_table = single.get_table(out_cols, row['Single/Group KWs'], kw, skus=pad_df_list)
+                    x_table = single.get_table(out_cols, row['Single/Group KWs'], kw, skus=pa_df_list)
                     x_table = single.modify_table(row, x_table, 
                                             'Single', 
                                             kw,
@@ -76,7 +75,7 @@ def proccess_df(input_df: pd.DataFrame, campaign_name_order: dict = cno_module_2
             kws = hep.download_from_gdrive(row['Keyword Link'])[0].to_list()
             if not pd.isna(row['Negative Targeting']):
                 neg_df = hep.download_from_gdrive(row['Negative Targeting'])
-                x_table = single.get_table(out_cols, row['Single/Group KWs'], kws, neg_keywords=neg_df[0].to_list(), skus=pad_df_list)
+                x_table = single.get_table(out_cols, row['Single/Group KWs'], kws, neg_keywords=neg_df[0].to_list(), skus=pa_df_list)
                 x_table = single.modify_table(row, x_table, 
                                         'Group', 
                                         kws, 
@@ -84,7 +83,7 @@ def proccess_df(input_df: pd.DataFrame, campaign_name_order: dict = cno_module_2
                                                     neg_df[1].to_list()],
                                         campaign_name_order=campaign_name_order, pa_df=pa_df)
             else:
-                x_table = single.get_table(out_cols, row['Single/Group KWs'], kws, skus=pad_df_list)
+                x_table = single.get_table(out_cols, row['Single/Group KWs'], kws, skus=pa_df_list)
                 x_table = single.modify_table(row, x_table, 
                                         'Group', 
                                         kws,

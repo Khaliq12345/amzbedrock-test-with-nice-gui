@@ -48,7 +48,8 @@ def error_check(input_data:pd.DataFrame):
     }
     
 def make_the_table(row):
-    neg_df, pa_df = None, None
+    pa_df, pa_df_list = hep.download_product_ads(row)
+    neg_df = None
     if not pd.isna(row['Negative Targeting']):
         neg_df = hep.download_from_gdrive(row['Negative Targeting'])
         neg_df_list = neg_df[0].to_list()
@@ -56,10 +57,10 @@ def make_the_table(row):
         neg_df_list = []
     if not pd.isna(row['Product Ads']):
         pa_df = hep.download_from_gdrive(row['Product Ads'])
-        pad_df_list = pa_df[0].to_list()
+        pa_df_list = pa_df[0].to_list()
     else:
         pa_df_list = []
-    x_table = single.get_table(out_cols, neg_df_list, pad_df_list)
+    x_table = single.get_table(out_cols, neg_df_list, pa_df_list)
     return x_table, neg_df, pa_df
 
 def proccess_df(input_df: pd.DataFrame, campaign_name_order: dict = cno_module_1):
