@@ -21,15 +21,15 @@ class ModuleTemp:
     
     async def data_processing(self, module, input_df, name_values):
         await asyncio.sleep(3)
-        #try:
-        output_data = module(input_df, name_values)
-        return output_data
-        # except Exception as e:
-        #     self.spinner_col.clear()
-        #     ui.notification(f"""
-        #     Error while processing the module. 
-        #     {e}
-        #     """, position='top', multi_line=True, type='negative', timeout=10, close_button=True)
+        try:
+            output_data = module(input_df, name_values)
+            return output_data
+        except Exception as e:
+            self.spinner_col.clear()
+            ui.notification(f"""
+            Error while processing the module. 
+            {e}
+            """, position='top', multi_line=True, type='negative', timeout=10, close_button=True)
 
     async def data_checking(self):
         try:
@@ -85,26 +85,26 @@ class ModuleTemp:
         with self.spinner_col:
             ui.spinner(size='lg', type='dots')
         #---------------------------------------------------
-        #try:
-        with self.output_data_col:
-            if self.input_df is not None:
-                self.output_data = await self.data_processing(self.module_obj.proccess_df, self.input_df, name_values)
-                with ui.expansion(caption="Show output").props('header-class="bg-green-3"').classes('w-full'):
-                    ui.table.from_pandas(df=self.output_data.head(10)).classes(
-                    'w-full my-sticky-header-column-table').props('separator="cell" flat bordered')
-                    self.buffer = io.BytesIO()
-                    writer = pd.ExcelWriter(self.buffer, engine='xlsxwriter')
-                    self.output_data.to_excel(writer, sheet_name='Sheet1', index=False)
-                    writer.close()
-                with ui.column(align_items='center').classes('w-full px-10'):
-                    ui.button("Download", on_click=lambda: ui.download(
-                    self.buffer.getvalue(), f"Output_{app.storage.user['user']['username']}_result.xlsx", 'application/vnd.ms-excel'))
-        # except Exception as e:
-        #     self.spinner_col.clear()
-        #     ui.notification(f"""
-        #     Error while processing the module. 
-        #     {e}
-        #     """, position='top', multi_line=True, type='negative', timeout=10, close_button=True)
+        try:
+            with self.output_data_col:
+                if self.input_df is not None:
+                    self.output_data = await self.data_processing(self.module_obj.proccess_df, self.input_df, name_values)
+                    with ui.expansion(caption="Show output").props('header-class="bg-green-3"').classes('w-full'):
+                        ui.table.from_pandas(df=self.output_data.head(10)).classes(
+                        'w-full my-sticky-header-column-table').props('separator="cell" flat bordered')
+                        self.buffer = io.BytesIO()
+                        writer = pd.ExcelWriter(self.buffer, engine='xlsxwriter')
+                        self.output_data.to_excel(writer, sheet_name='Sheet1', index=False)
+                        writer.close()
+                    with ui.column(align_items='center').classes('w-full px-10'):
+                        ui.button("Download", on_click=lambda: ui.download(
+                        self.buffer.getvalue(), f"Output_{app.storage.user['user']['username']}_result.xlsx", 'application/vnd.ms-excel'))
+        except Exception as e:
+            self.spinner_col.clear()
+            ui.notification(f"""
+            Error while processing the module. 
+            {e}
+            """, position='top', multi_line=True, type='negative', timeout=10, close_button=True)
         self.spinner_col.clear()
         
     def on_click_menu(self):
@@ -174,7 +174,13 @@ class ModuleTemp:
         
     def engine(self):
         if ph.is_still_login():
-            self.page_template()
+            try:
+                self.page_template()
+            except Exception as e:
+                ui.notification(f"""
+                Error while processing the module. 
+                {e}
+                """, position='top', multi_line=True, type='negative', timeout=10, close_button=True)
         else:
             ui.navigate.to('/single')
             
